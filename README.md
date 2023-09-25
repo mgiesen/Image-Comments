@@ -23,6 +23,8 @@ The `Image Comments` Visual Studio Code extension lets you easily add visual com
 3. Search for "Image Comments"
 4. Click the "Install" button
 
+Or just install the extension from [marketplace](https://marketplace.visualstudio.com/items?itemName=mgiesen.image-comments&ssr=false#review-details).
+
 ## Usage
 
 Write your comment in the following format:
