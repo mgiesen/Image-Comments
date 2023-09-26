@@ -29,15 +29,16 @@ Or just install the extension from [marketplace](https://marketplace.visualstudi
 
 Write your comment in the following format:
 
-```plaintext
+```js
 // Describes the function logic [image-comments/image1.png]
 ```
 
--Create a dedicated folder named `image-comments` within your project directory and populate it with your images.
--The comment preceding the image path will be displayed in the tooltip.
--The image path is relative to the image-comments directory in your workspace.
+- Create a dedicated folder named `image-comments` within your project directory and populate it with your images.
+- Add a typical comment to your code.
+- Append the image path in square brackets.
+- Hover the comment, to see the image inside of your code editor. 
 
 ## Author
 
-Maximilian Giesen
+Maximilian Giesen  
 https://github.com/mgiesen
