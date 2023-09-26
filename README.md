@@ -33,10 +33,10 @@ Write your comment in the following format:
 // Describes the function logic [image-comments/image1.png]
 ```
 
-- Create a dedicated folder named `image-comments` within your project directory and populate it with your images.
-- Add a typical comment to your code.
-- Append the image path in square brackets.
-- Hover the comment, to see the image inside of your code editor. 
+- Place your image in the project folder and note its file path relative to the project root.
+- Insert a standard comment into your code.
+- Append the relative image path to the comment, enclosed in square brackets.
+- Hover over the comment to view the image directly within your code editor.
 
 ## Author
 

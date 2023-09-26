@@ -17,7 +17,7 @@ function activate(context)
 			provideHover(document, position, token)
 			{
 				const line = document.lineAt(position.line).text;
-				const commentPattern = new RegExp(`${commentSymbol}(.+) \\[image-comments\\/(.+)\\]$`);
+				const commentPattern = new RegExp(`${commentSymbol}(.+) \\[(.+\\.\\w+)\\]$`);
 
 				const match = line.match(commentPattern);
 				if (match && match[1] && match[2])
@@ -26,7 +26,7 @@ function activate(context)
 					if (workspaceFolder)
 					{
 						const rootPath = workspaceFolder.uri.fsPath;
-						const imgPath = path.join(rootPath, 'image-comments', match[2]);
+						const imgPath = path.join(rootPath, match[2]);
 
 						if (fs.existsSync(imgPath))
 						{
