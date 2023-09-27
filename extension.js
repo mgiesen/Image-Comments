@@ -11,6 +11,13 @@ function activate(context)
 		'csharp': '\/\/'
 	};
 
+	context.subscriptions.push(
+		vscode.commands.registerCommand('extension.openImage', (imgPath) =>
+		{
+			vscode.commands.executeCommand('vscode.open', vscode.Uri.file(imgPath));
+		})
+	);
+
 	for (const [lang, commentSymbol] of Object.entries(supportedLanguages))
 	{
 		let disposable = vscode.languages.registerHoverProvider(lang, {
@@ -31,13 +38,18 @@ function activate(context)
 						if (fs.existsSync(imgPath))
 						{
 							const imgUri = vscode.Uri.file(imgPath).toString();
+
 							const hoverContent = [
 								'# Image Comments',
 								match[1],
 								'',
-								`![Image](${imgUri})`
+								`[Open Image](command:extension.openImage?${encodeURIComponent(JSON.stringify(imgPath))})`,
+								'',
+								`![Image](${imgUri})`,
 							].join('\n');
-							const md = new vscode.MarkdownString(hoverContent);
+
+							const md = new vscode.MarkdownString(hoverContent, true);
+							md.isTrusted = true;
 							return new vscode.Hover(md);
 						}
 					}
