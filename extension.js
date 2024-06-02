@@ -41,7 +41,7 @@ function activate(context)
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.scaleImage', async (imgPath) =>
 		{
-			const width = 50;
+			const width = 500;
 			const shouldProceed = await vscode.window.showInformationMessage(
 				`Do you want to permanently scale the linked image in the comment to a width of ${width}px? The window will reload after scaling to apply the changes.`,
 				{ modal: true },
