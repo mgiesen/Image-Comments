@@ -10,7 +10,25 @@ function activate(context)
 		'python': '#',
 		'cpp': '\/\/',
 		'csharp': '\/\/',
-		'sql': '--'
+		'sql': '--',
+		'typescript': '\/\/',
+		'typescriptreact': '\/\/',
+		'php': '\/\/',
+		'java': '\/\/',
+		'ruby': '#',
+		'go': '//',
+		'swift': '//',
+		'kotlin': '//',
+		'perl': '#',
+		'r': '#',
+		'shellscript': '#',
+		'lua': '--',
+		'groovy': '//',
+		'powershell': '#',
+		'rust': '//',
+		'dart': '//',
+		'haskell': '--',
+		'elixir': '#'
 	};
 
 	context.subscriptions.push(
@@ -21,10 +39,9 @@ function activate(context)
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('extension.scaleImage', async (imgPath) => 
+		vscode.commands.registerCommand('extension.scaleImage', async (imgPath) =>
 		{
 			const width = 50;
-
 			const shouldProceed = await vscode.window.showInformationMessage(
 				`Do you want to permanently scale the linked image in the comment to a width of ${width}px? The window will reload after scaling to apply the changes.`,
 				{ modal: true },
@@ -39,7 +56,6 @@ function activate(context)
 					{
 						await image.resize(width, Jimp.AUTO).writeAsync(imgPath);
 						vscode.commands.executeCommand('workbench.action.reloadWindow');
-
 					})
 					.catch(err =>
 					{
@@ -56,8 +72,7 @@ function activate(context)
 			provideHover(document, position, token)
 			{
 				const line = document.lineAt(position.line).text;
-				const commentPattern = new RegExp(`${commentSymbol}(.+) \\[(.+\\.\\w+)\\]$`);
-
+				const commentPattern = new RegExp(`${commentSymbol}(.+)\\[(.+\\.\\w+)\\]$`);
 				const match = line.match(commentPattern);
 				if (match && match[1] && match[2])
 				{
@@ -66,11 +81,9 @@ function activate(context)
 					{
 						const rootPath = workspaceFolder.uri.fsPath;
 						const imgPath = path.join(rootPath, match[2]);
-
 						if (fs.existsSync(imgPath))
 						{
 							const imgUri = vscode.Uri.file(imgPath).toString();
-
 							const hoverContent = [
 								'# Image Comments',
 								match[1],
@@ -80,7 +93,6 @@ function activate(context)
 								'',
 								`![Image](${imgUri})`,
 							].join('\n');
-
 							const md = new vscode.MarkdownString(hoverContent, true);
 							md.isTrusted = true;
 							return new vscode.Hover(md);
