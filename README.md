@@ -8,7 +8,7 @@ The `Image Comments` Visual Studio Code extension lets you easily add visual com
 
 ## Features
 
-- Supports multiple programming languages: JavaScript, Python, C++, C#
+- Supports multiple programming languages: JavaScript, Python, C++, C#, SQL
 - Hover over comments to display your custom images in a tooltip
 - Easy-to-use comment syntax for linking images
 
