@@ -1,39 +1,46 @@
 # Image Comments for Visual Studio Code
 
+![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mgiesen.image-comments)
+![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/mgiesen.image-comments)
+
 ## Description
 
-The `Image Comments` Visual Studio Code extension lets you easily add visual comments such as sketches or diagrams directly into your source code, improving code documentation and understanding.
+The `Image Comments` extension for Visual Studio Code allows you to add images, such as sketches or diagrams, directly into your source code. This helps to improve documentation and understanding, especially for complex algorithms. By visualizing code concepts, it makes them easier to comprehend and track over time.
 
 ![Image](readme/image-comment.png)
 
 ## Features
 
-- Hover over image comments to display your custom images in a tooltip
-- Easy-to-use comment syntax for linking images
-- Supports most programming languages:
-  - JavaScript
-  - Python
-  - C++
-  - C#
-  - SQL
-  - TypeScript
-  - TypeScriptReact
-  - PHP
-  - Java
-  - Ruby
-  - Go
-  - Swift
-  - Kotlin
-  - Perl
-  - R
-  - ShellScript
-  - Lua
-  - Groovy
-  - PowerShell
-  - Rust
-  - Dart
-  - Haskell
-  - Elixir
+- Hover over comments to display custom images in a tooltip
+- Simple syntax for linking images in comments
+- Option to open images directly within the editor
+- Option to scale down images to reduce file size
+
+## Supported File Types
+
+- JavaScript
+- Python
+- C++
+- C#
+- SQL
+- TypeScript
+- TypeScriptReact
+- PHP
+- Java
+- Ruby
+- Go
+- Swift
+- Kotlin
+- Perl
+- R
+- ShellScript
+- Lua
+- Groovy
+- PowerShell
+- Rust
+- Dart
+- Haskell
+- Elixir
 
 ## Requirements
 
@@ -72,6 +79,10 @@ SQL Example:
 ```sql
 -- Functional comment [image-comments/image1.png]
 ```
+
+## Reporting Issues
+
+If you encounter any problems or have suggestions, please open an issue on our GitHub [repository](https://github.com/mgiesen/Image-Comments).
 
 ## Contributing to This Project
 
