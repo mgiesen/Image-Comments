@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
+const Jimp = require('jimp');
 
 function activate(context)
 {
@@ -8,13 +9,44 @@ function activate(context)
 		'javascript': '\/\/',
 		'python': '#',
 		'cpp': '\/\/',
-		'csharp': '\/\/'
+		'csharp': '\/\/',
+		'sql': '--'
 	};
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.openImage', (imgPath) =>
 		{
 			vscode.commands.executeCommand('vscode.open', vscode.Uri.file(imgPath));
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('extension.scaleImage', async (imgPath) => 
+		{
+			const width = 50;
+
+			const shouldProceed = await vscode.window.showInformationMessage(
+				`Do you want to permanently scale the linked image in the comment to a width of ${width}px? The window will reload after scaling to apply the changes.`,
+				{ modal: true },
+				'Yes',
+				'No'
+			);
+
+			if (shouldProceed === 'Yes')
+			{
+				Jimp.read(imgPath)
+					.then(async image =>
+					{
+						await image.resize(width, Jimp.AUTO).writeAsync(imgPath);
+						vscode.commands.executeCommand('workbench.action.reloadWindow');
+
+					})
+					.catch(err =>
+					{
+						vscode.window.showErrorMessage('Image Comments could not scale your image');
+						console.error(err);
+					});
+			}
 		})
 	);
 
@@ -44,6 +76,7 @@ function activate(context)
 								match[1],
 								'',
 								`[Open Image](command:extension.openImage?${encodeURIComponent(JSON.stringify(imgPath))})`,
+								`[Scale Image](command:extension.scaleImage?${encodeURIComponent(JSON.stringify(imgPath))})`,
 								'',
 								`![Image](${imgUri})`,
 							].join('\n');
