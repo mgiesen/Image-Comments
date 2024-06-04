@@ -16,6 +16,44 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 - Option to open images directly within the editor
 - Option to scale down images to reduce file size
 
+## Requirements
+
+- Visual Studio Code version 1.60.0 or higher
+
+## Usage
+
+- Place your image in the project folder and note it's file path relative to the project root.
+- Insert a standard comment into your code.
+- Append the relative image path to the comment, enclosed in square brackets.
+- Hover over the comment to view the image directly within your IDE.
+
+JavaScript Example:
+
+```js
+// Functional comment [image-comments/image1.png]
+```
+
+Python Example:
+
+```Python
+# Functional comment [image-comments/image1.png]
+```
+
+SQL Example:
+
+```sql
+-- Functional comment [image-comments/image1.png]
+```
+
+## Installation
+
+1. Open Visual Studio Code
+2. Go to Extensions Marketplace
+3. Search for "Image Comments"
+4. Click the "Install" button
+
+Or just install the extension from [marketplace](https://marketplace.visualstudio.com/items?itemName=mgiesen.image-comments&ssr=false#review-details).
+
 ## Supported File Types
 
 - JavaScript
@@ -42,43 +80,9 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 - Haskell
 - Elixir
 
-## Requirements
+## Limitations
 
-- Visual Studio Code version 1.60.0 or higher
-
-## Installation
-
-1. Open Visual Studio Code
-2. Go to Extensions Marketplace
-3. Search for "Image Comments"
-4. Click the "Install" button
-
-Or just install the extension from [marketplace](https://marketplace.visualstudio.com/items?itemName=mgiesen.image-comments&ssr=false#review-details).
-
-## Usage
-
-- Place your image in the project folder and note it's file path relative to the project root.
-- Insert a standard comment into your code.
-- Append the relative image path to the comment, enclosed in square brackets.
-- Hover over the comment to view the image directly within your IDE.
-
-JavaScript Example:
-
-```js
-// Functional comment [image-comments/image1.png]
-```
-
-Python Example:
-
-```Python
-# Functional comment [image-comments/image1.png]
-```
-
-SQL Example:
-
-```sql
--- Functional comment [image-comments/image1.png]
-```
+Due to the limitations of Visual Studio Code, it is not possible to display images directly in the code. Therefore, this extension uses the solution of visualization via tooltips. The usage and styling of tooltips are also severely restricted. We do our best to always utilize all possibilities provided by Microsoft.
 
 ## Reporting Issues
 
