@@ -14,7 +14,7 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 - Hover over comments to display custom images in a tooltip
 - Simple syntax for linking images in comments
 - Option to open images directly within the editor
-- Option to scale down images to reduce file size
+- Option to scale images for better overview
 
 ## Requirements
 
