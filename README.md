@@ -22,15 +22,20 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 
 ## Usage
 
-- Place your image in the project folder and note it's file path relative to the project root.
+- Place your image in a folder that is accessible relative to the source file you are working on.
 - Insert a standard comment into your code.
-- Append the relative image path to the comment, enclosed in square brackets.
+- Append the relative image path, starting from the current file's folder, enclosed in square brackets to the comment.
+- The image can be located in the same folder, a subfolder, or a parent folder of the current file.
 - Hover over the comment to view the image directly within your IDE.
 
-JavaScript Example:
+Javascript Examples:
 
-```js
-// Functional comment [image-comments/image1.png]
+```javascript
+// If the image is in the same folder [image.png]
+
+// If the image is in a subfolder [images/image.png]
+
+// If the image is in a parent folder [../image.png]
 ```
 
 Python Example:
@@ -59,6 +64,7 @@ Or just install the extension from [marketplace](https://marketplace.visualstudi
 - JavaScript
 - Python
 - C++
+- C
 - C#
 - SQL
 - TypeScript

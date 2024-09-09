@@ -3,36 +3,44 @@ const path = require('path');
 const vscode = require('vscode');
 
 let currentTooltipSize = 500;
+
 const tooltipSizes = [300, 500, 750, 1000, 'no-scale'];
+
+const supportedLanguages = {
+	'javascript': '\/\/',
+	'python': '#',
+	'cpp': '\/\/',
+	'c': '\/\/',
+	'csharp': '\/\/',
+	'sql': '--',
+	'typescript': '\/\/',
+	'typescriptreact': '\/\/',
+	'php': '\/\/',
+	'java': '\/\/',
+	'ruby': '#',
+	'go': '//',
+	'swift': '//',
+	'kotlin': '//',
+	'perl': '#',
+	'r': '#',
+	'shellscript': '#',
+	'lua': '--',
+	'groovy': '//',
+	'powershell': '#',
+	'rust': '//',
+	'dart': '//',
+	'haskell': '--',
+	'elixir': '#'
+};
+
+function createHoverContent(title, body)
+{
+	return new vscode.MarkdownString([`# ${title}`, body].join('\n'), true);
+}
 
 function activate(context)
 {
-	const supportedLanguages = {
-		'javascript': '\/\/',
-		'python': '#',
-		'cpp': '\/\/',
-		'csharp': '\/\/',
-		'sql': '--',
-		'typescript': '\/\/',
-		'typescriptreact': '\/\/',
-		'php': '\/\/',
-		'java': '\/\/',
-		'ruby': '#',
-		'go': '//',
-		'swift': '//',
-		'kotlin': '//',
-		'perl': '#',
-		'r': '#',
-		'shellscript': '#',
-		'lua': '--',
-		'groovy': '//',
-		'powershell': '#',
-		'rust': '//',
-		'dart': '//',
-		'haskell': '--',
-		'elixir': '#'
-	};
-
+	// Register function, to open image in IDE
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.openImage', (imgPath) =>
 		{
@@ -40,6 +48,7 @@ function activate(context)
 		})
 	);
 
+	// Register function, to resize image in tooltip
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.resizeImage', async ({ imgPath, size }) =>
 		{
@@ -68,41 +77,63 @@ function activate(context)
 		const commentSymbol = supportedLanguages[document.languageId];
 		const commentPattern = new RegExp(`${commentSymbol}(.+)\\[(.+\\.\\w+)\\]$`);
 		const match = line.match(commentPattern);
-		if (match && match[1] && match[2])
+
+		// Verify if the line follows the image comment format
+		if (!match || !match[1] || !match[2])
 		{
-			const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
-			if (workspaceFolder)
+			return;
+		}
+
+		const documentFilePath = vscode.window.activeTextEditor.document.uri.fsPath;
+		const documentFolderPath = path.dirname(documentFilePath);
+
+		const regexComment = match[1];
+		const regexImg = match[2];
+
+		const imgPath = path.join(documentFolderPath, regexImg);
+		const imgExists = fs.existsSync(imgPath);
+
+		if (imgExists)
+		{
+			const imgUri = vscode.Uri.file(imgPath).toString();
+
+			const sizeLinks = tooltipSizes.map(size =>
 			{
-				const rootPath = workspaceFolder.uri.fsPath;
-				const imgPath = path.join(rootPath, match[2]);
-				if (fs.existsSync(imgPath))
+				if (size === currentTooltipSize)
 				{
-					const imgUri = vscode.Uri.file(imgPath).toString();
-					const sizeLinks = tooltipSizes.map(size =>
-					{
-						if (size === currentTooltipSize)
-						{
-							return `**[${size === 'no-scale' ? 'No Scale' : size + 'px'}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})**`;
-						}
-						return `[${size === 'no-scale' ? 'No Scale' : size + 'px'}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})`;
-					}).join(' ');
-					const hoverContent = [
-						'# Image Comments',
-						match[1],
-						'',
-						`[Open Image in IDE](command:extension.openImage?${encodeURIComponent(JSON.stringify(imgPath))})`,
-						'',
-						sizeLinks,
-						'',
-						currentTooltipSize === 'no-scale' ? `![Image](${imgUri})` : `![Image](${imgUri}|width=${currentTooltipSize}px)`,
-					].join('\n');
-					const md = new vscode.MarkdownString(hoverContent, true);
-					md.isTrusted = true;
-					return new vscode.Hover(md);
+					return `**[${size === 'no-scale' ? 'No Scale' : size + 'px'}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})**`;
 				}
-			}
+				return `[${size === 'no-scale' ? 'No Scale' : size + 'px'}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})`;
+			}).join(' ');
+
+			const hoverContent = [
+				'# Image Comments',
+				regexComment,
+				'',
+				`[Open Image in IDE](command:extension.openImage?${encodeURIComponent(JSON.stringify(imgPath))})`,
+				'',
+				sizeLinks,
+				'',
+				currentTooltipSize === 'no-scale' ? `![Image](${imgUri})` : `![Image](${imgUri}|width=${currentTooltipSize}px)`,
+			].join('\n');
+
+			const md = new vscode.MarkdownString(hoverContent, true);
+			md.isTrusted = true;
+			return new vscode.Hover(md);
+		}
+		else
+		{
+			const hoverContent = [
+				'# Image Comments',
+				'Could not find image',
+			].join('\n');
+
+			const md = new vscode.MarkdownString(hoverContent, true);
+			md.isTrusted = true;
+			return new vscode.Hover(md);
 		}
 	}
+
 
 	registerHoverProviders(context);
 }
