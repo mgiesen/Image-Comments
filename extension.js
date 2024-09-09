@@ -107,7 +107,7 @@ function activate(context)
 			}).join(' ');
 
 			const hoverContent = [
-				'# Image Comments',
+				'## Image Comments',
 				regexComment,
 				'',
 				`[Open Image in IDE](command:extension.openImage?${encodeURIComponent(JSON.stringify(imgPath))})`,
@@ -124,7 +124,7 @@ function activate(context)
 		else
 		{
 			const hoverContent = [
-				'# Image Comments',
+				'## Image Comments',
 				'Could not find image',
 			].join('\n');
 
