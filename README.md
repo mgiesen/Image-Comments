@@ -23,31 +23,24 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 ## Usage
 
 - Place your image in a folder that is accessible relative to the source file you are working on.
-- Insert a standard comment into your code.
-- Append the relative image path, starting from the current file's folder, enclosed in square brackets to the comment.
+- Insert a comment into your code using the appropriate comment syntax for your programming language.
+- Append the relative image path, starting from the current file's folder, enclosed in square brackets `[]` within the comment.
 - The image can be located in the same folder, a subfolder, or a parent folder of the current file.
-- Hover over the comment to view the image directly within your IDE.
+- Hover over the comment to view the image directly in the tooltip within your IDE.
+- The extension supports both single-line and multi-line comments in various programming languages.
 
-Javascript Examples:
+### JavaScript Example
 
 ```javascript
-// If the image is in the same folder [image.png]
+// Image in the same folder [image.png]
 
-// If the image is in a subfolder [images/image.png]
+// Image in a subfolder [images/image.png]
 
-// If the image is in a parent folder [../image.png]
-```
+// Image in a parent folder [../image.png]
 
-Python Example:
-
-```Python
-# Functional comment [image-comments/image1.png]
-```
-
-SQL Example:
-
-```sql
--- Functional comment [image-comments/image1.png]
+/*
+   You can also use multi-line comments [../image.png]
+*/
 ```
 
 ## Installation
@@ -61,30 +54,43 @@ Or just install the extension from [marketplace](https://marketplace.visualstudi
 
 ## Supported File Types
 
-- JavaScript
-- Python
-- C++
 - C
+- Clojure
+- CoffeeScript
+- C++
 - C#
-- SQL
-- TypeScript
-- TypeScriptReact
-- PHP
-- Java
-- Ruby
-- Go
-- Swift
-- Kotlin
-- Perl
-- R
-- ShellScript
-- Lua
-- Groovy
-- PowerShell
-- Rust
+- CSS
 - Dart
-- Haskell
 - Elixir
+- F#
+- Go
+- Groovy
+- Haskell
+- HTML
+- Java
+- JavaScript
+- JSON with Comments (jsonc)
+- Kotlin
+- Less
+- Lua
+- MATLAB
+- Objective-C
+- OCaml
+- Perl
+- PHP
+- PowerShell
+- Python
+- R
+- Ruby
+- Rust
+- Sass
+- Scala
+- SCSS
+- Shell Script
+- SQL
+- Swift
+- TypeScript
+- YAML
 
 ## Limitations
 

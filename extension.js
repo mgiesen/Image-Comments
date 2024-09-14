@@ -1,46 +1,180 @@
+// Import necessary modules
 const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 
-let currentTooltipSize = 500;
+// Initialize the default tooltip size
+let currentTooltipSize = 400;
 
-const tooltipSizes = [300, 500, 750, 1000, 'no-scale'];
+// Define available tooltip sizes
+const tooltipSizes = [300, 400, 500, 750, 1000, 'no-scale'];
 
+/**
+ * Supported languages with their comment symbols
+ */
 const supportedLanguages = {
-	'javascript': '\/\/',
-	'python': '#',
-	'cpp': '\/\/',
-	'c': '\/\/',
-	'csharp': '\/\/',
-	'sql': '--',
-	'typescript': '\/\/',
-	'typescriptreact': '\/\/',
-	'php': '\/\/',
-	'java': '\/\/',
-	'ruby': '#',
-	'go': '//',
-	'swift': '//',
-	'kotlin': '//',
-	'perl': '#',
-	'r': '#',
-	'shellscript': '#',
-	'lua': '--',
-	'groovy': '//',
-	'powershell': '#',
-	'rust': '//',
-	'dart': '//',
-	'haskell': '--',
-	'elixir': '#'
+	'c': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'clojure': {
+		singleLine: [';']
+		// No support for multi-line comments
+	},
+	'coffeescript': {
+		singleLine: ['#'],
+		multiLine: { start: '###', end: '###' }
+	},
+	'cpp': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'csharp': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'css': {
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'dart': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'elixir': {
+		singleLine: ['#']
+		// No support for multi-line comments
+	},
+	'fsharp': {
+		singleLine: ['//'],
+		multiLine: { start: '(*', end: '*)' }
+	},
+	'go': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'groovy': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'haskell': {
+		singleLine: ['--'],
+		multiLine: { start: '{-', end: '-}' }
+	},
+	'html': {
+		multiLine: { start: '<!--', end: '-->' }
+	},
+	'java': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'javascript': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'jsonc': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'kotlin': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'less': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'lua': {
+		singleLine: ['--'],
+		multiLine: { start: '--[[', end: ']]' }
+	},
+	'matlab': {
+		singleLine: ['%'],
+		multiLine: { start: '%{', end: '%}' }
+	},
+	'objective-c': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'ocaml': {
+		multiLine: { start: '(*', end: '*)' }
+	},
+	'perl': {
+		singleLine: ['#'],
+		multiLine: { start: '=pod', end: '=cut' }
+	},
+	'php': {
+		singleLine: ['//', '#'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'powershell': {
+		singleLine: ['#'],
+		multiLine: { start: '<#', end: '#>' }
+	},
+	'python': {
+		singleLine: ['#']
+		// No support for multi-line comments
+	},
+	'r': {
+		singleLine: ['#']
+		// No support for multi-line comments
+	},
+	'ruby': {
+		singleLine: ['#'],
+		multiLine: { start: '=begin', end: '=end' }
+	},
+	'rust': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'sass': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'scala': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'scss': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'shellscript': {
+		singleLine: ['#']
+		// No support for multi-line comments
+	},
+	'sql': {
+		singleLine: ['--'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'swift': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'typescript': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},
+	'yaml': {
+		singleLine: ['#']
+		// No support for multi-line comments
+	}
 };
 
-function createHoverContent(title, body)
+
+/**
+ * Escapes special characters in a string so it can be used in a regular expression
+ */
+function escapeRegExp(string)
 {
-	return new vscode.MarkdownString([`# ${title}`, body].join('\n'), true);
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * Activates the extension
+ */
 function activate(context)
 {
-	// Register function, to open image in IDE
+	// Register command to open image in the editor
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.openImage', (imgPath) =>
 		{
@@ -48,7 +182,7 @@ function activate(context)
 		})
 	);
 
-	// Register function, to resize image in tooltip
+	// Register command to resize image in the tooltip
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.resizeImage', async ({ imgPath, size }) =>
 		{
@@ -57,85 +191,232 @@ function activate(context)
 		})
 	);
 
-	function registerHoverProviders(context)
-	{
-		for (const [lang, commentSymbol] of Object.entries(supportedLanguages))
-		{
-			let disposable = vscode.languages.registerHoverProvider(lang, {
-				provideHover(document, position, token)
-				{
-					return provideHover(document, position);
-				}
-			});
-			context.subscriptions.push(disposable);
-		}
-	}
-
-	function provideHover(document, position)
-	{
-		const line = document.lineAt(position.line).text;
-		const commentSymbol = supportedLanguages[document.languageId];
-		const commentPattern = new RegExp(`${commentSymbol}(.+)\\[(.+\\.\\w+)\\]$`);
-		const match = line.match(commentPattern);
-
-		// Verify if the line follows the image comment format
-		if (!match || !match[1] || !match[2])
-		{
-			return;
-		}
-
-		const documentFilePath = vscode.window.activeTextEditor.document.uri.fsPath;
-		const documentFolderPath = path.dirname(documentFilePath);
-
-		const regexComment = match[1];
-		const regexImg = match[2];
-
-		const imgPath = path.join(documentFolderPath, regexImg);
-		const imgExists = fs.existsSync(imgPath);
-
-		if (imgExists)
-		{
-			const imgUri = vscode.Uri.file(imgPath).toString();
-
-			const sizeLinks = tooltipSizes.map(size =>
-			{
-				if (size === currentTooltipSize)
-				{
-					return `**[${size === 'no-scale' ? 'No Scale' : size + 'px'}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})**`;
-				}
-				return `[${size === 'no-scale' ? 'No Scale' : size + 'px'}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})`;
-			}).join(' ');
-
-			const hoverContent = [
-				'## Image Comments',
-				regexComment,
-				'',
-				`[Open Image in IDE](command:extension.openImage?${encodeURIComponent(JSON.stringify(imgPath))})`,
-				'',
-				sizeLinks,
-				'',
-				currentTooltipSize === 'no-scale' ? `![Image](${imgUri})` : `![Image](${imgUri}|width=${currentTooltipSize}px)`,
-			].join('\n');
-
-			const md = new vscode.MarkdownString(hoverContent, true);
-			md.isTrusted = true;
-			return new vscode.Hover(md);
-		}
-		else
-		{
-			const hoverContent = [
-				'## Image Comments',
-				'Could not find image',
-			].join('\n');
-
-			const md = new vscode.MarkdownString(hoverContent, true);
-			md.isTrusted = true;
-			return new vscode.Hover(md);
-		}
-	}
-
-
+	// Register hover providers for all supported languages
 	registerHoverProviders(context);
 }
 
+/**
+ * Registers hover providers for each supported language
+ */
+function registerHoverProviders(context)
+{
+	for (const languageId of Object.keys(supportedLanguages))
+	{
+		const disposable = vscode.languages.registerHoverProvider(languageId, {
+			provideHover(document, position)
+			{
+				return provideHover(document, position);
+			}
+		});
+		context.subscriptions.push(disposable);
+	}
+}
+
+/**
+ * Provides hover content when the user hovers over a comment
+ */
+function provideHover(document, position)
+{
+	const languageId = document.languageId;
+	const commentSymbols = supportedLanguages[languageId];
+
+	if (!commentSymbols)
+	{
+		return;
+	}
+
+	const lineText = document.lineAt(position.line).text;
+	const lineTillPosition = lineText.substring(0, position.character);
+
+	// Check for single-line comments
+	const singleLineCommentSymbols = commentSymbols.singleLine || [];
+	for (const symbol of singleLineCommentSymbols)
+	{
+		const symbolIndex = lineText.indexOf(symbol);
+		if (symbolIndex !== -1 && position.character >= symbolIndex)
+		{
+			const commentText = lineText.substring(symbolIndex + symbol.length).trim();
+			return processComment(commentText, document);
+		}
+	}
+
+	// Check for multi-line comments on the same line
+	if (commentSymbols.multiLine)
+	{
+		const { start: startSymbol, end: endSymbol } = commentSymbols.multiLine;
+		const startIndex = lineText.indexOf(startSymbol);
+		const endIndex = lineText.indexOf(endSymbol, startIndex + startSymbol.length);
+
+		if (
+			startIndex !== -1 &&
+			endIndex !== -1 &&
+			position.character > startIndex &&
+			position.character < endIndex
+		)
+		{
+			// Cursor is within a multi-line comment on the same line
+			const commentText = lineText.substring(startIndex + startSymbol.length, endIndex).trim();
+			return processComment(commentText, document);
+		}
+
+		// Check for multi-line comments spanning multiple lines
+		const inMultiLineComment = isPositionInMultiLineComment(document, position, startSymbol, endSymbol);
+
+		if (inMultiLineComment)
+		{
+			const commentText = getMultiLineCommentText(document, position, startSymbol, endSymbol);
+			return processComment(commentText, document);
+		}
+	}
+
+	// Not in a comment
+	return;
+}
+
+/**
+ * Determines if the cursor position is within a multi-line comment.
+ * @param {vscode.TextDocument} document - The active text document.
+ * @param {vscode.Position} position - The cursor position.
+ * @param {string} startSymbol - The multi-line comment start symbol.
+ * @param {string} endSymbol - The multi-line comment end symbol.
+ * @returns {boolean} - True if within a multi-line comment, false otherwise.
+ */
+function isPositionInMultiLineComment(document, position, startSymbol, endSymbol)
+{
+	const textBeforePosition = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
+
+	// Regular expressions to match the start and end symbols
+	const startSymbolRegex = new RegExp(escapeRegExp(startSymbol), 'g');
+	const endSymbolRegex = new RegExp(escapeRegExp(endSymbol), 'g');
+
+	// Count occurrences before the cursor position
+	const startMatches = [...textBeforePosition.matchAll(startSymbolRegex)].length;
+	const endMatches = [...textBeforePosition.matchAll(endSymbolRegex)].length;
+
+	// Determine if the position is within a multi-line comment
+	return startMatches > endMatches;
+}
+
+/**
+ * Extracts the text of the multi-line comment containing the cursor position.
+ * @param {vscode.TextDocument} document - The active text document.
+ * @param {vscode.Position} position - The cursor position.
+ * @param {string} startSymbol - The multi-line comment start symbol.
+ * @param {string} endSymbol - The multi-line comment end symbol.
+ * @returns {string} - The text of the multi-line comment.
+ */
+function getMultiLineCommentText(document, position, startSymbol, endSymbol)
+{
+	const documentText = document.getText();
+
+	// Find the start of the comment
+	const offset = document.offsetAt(position);
+	const textBeforePosition = documentText.substring(0, offset);
+	const startSymbolIndex = textBeforePosition.lastIndexOf(startSymbol);
+
+	if (startSymbolIndex === -1)
+	{
+		return '';
+	}
+
+	// Find the end of the comment
+	const textAfterStart = documentText.substring(startSymbolIndex + startSymbol.length);
+	const endSymbolIndex = textAfterStart.indexOf(endSymbol);
+
+	if (endSymbolIndex === -1)
+	{
+		return '';
+	}
+
+	// Extract the comment text
+	const commentText = textAfterStart.substring(0, endSymbolIndex).trim();
+
+	return commentText;
+}
+
+// Processes the comment text to determine if it contains an image comment.
+function processComment(commentText, document)
+{
+	/*
+		Regular expression to match the image comment syntax
+	
+		^(.*)           captures any text (including none) at the beginning of the line.
+		\[              matches the opening square bracket.
+		([^\]]+)        captures everything inside the square brackets, ensuring no closing bracket is included.
+		\]              matches the closing square bracket.
+		\s*$            allows optional whitespace at the end of the line.
+	*/
+	const commentPattern = /^(.*)\[([^\]]+)\]\s*$/;
+	const match = commentText.match(commentPattern);
+
+	if (!match || !match[1] || !match[2])
+	{
+		return;
+	}
+
+	// Extract the description and image path
+	const description = match[1].trim();
+	const imagePath = match[2].trim();
+
+	// Resolve the absolute path of the image
+	const documentFolderPath = path.dirname(document.uri.fsPath);
+	const imgPath = path.join(documentFolderPath, imagePath);
+	let imgExists = false;
+	try
+	{
+		imgExists = fs.existsSync(imgPath);
+	}
+	catch (error)
+	{
+		imgExists = false;
+	}
+
+	if (imgExists)
+	{
+		const imgUri = vscode.Uri.file(imgPath).toString();
+
+		// Generate size adjustment links
+		const sizeLinks = tooltipSizes.map(size =>
+		{
+			const displaySize = size === 'no-scale' ? 'No Scale' : `${size}px`;
+			if (size === currentTooltipSize)
+			{
+				return `**[${displaySize}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})**`;
+			}
+			return `[${displaySize}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})`;
+		}).join(' ');
+
+		// Construct the hover content
+		const hoverContent = [
+			'## Image Comments',
+			description,
+			'',
+			`[Open Image in IDE](command:extension.openImage?${encodeURIComponent(JSON.stringify(imgPath))})`,
+			'',
+			sizeLinks,
+			'',
+			currentTooltipSize === 'no-scale'
+				? `![Image](${imgUri})`
+				: `![Image](${imgUri}|width=${currentTooltipSize}px)`,
+		].join('\n');
+
+		// Create and return the hover object
+		const markdown = new vscode.MarkdownString(hoverContent, true);
+		markdown.isTrusted = true;
+		return new vscode.Hover(markdown);
+	} else
+	{
+		// If the image does not exist, display an error message
+		const hoverContent = [
+			'## Image Comments',
+			'Could not find image',
+		].join('\n');
+
+		const markdown = new vscode.MarkdownString(hoverContent, true);
+		markdown.isTrusted = true;
+		return new vscode.Hover(markdown);
+	}
+}
+
 exports.activate = activate;
+
