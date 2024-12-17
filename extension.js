@@ -346,22 +346,33 @@ function processComment(commentText, document)
 		\]              matches the closing square bracket.
 		\s*$            allows optional whitespace at the end of the line.
 	*/
-	const commentPattern = /^(.*)\[([^\]]+)\]\s*$/;
+
+	const commentPattern = /^(.*?)\[([^\]]+)\]\s*$/;
 	const match = commentText.match(commentPattern);
 
-	if (!match || !match[1] || !match[2])
+	if (!match)
 	{
 		return;
 	}
 
-	// Extract the description and image path
-	const description = match[1].trim();
-	const imagePath = match[2].trim();
+	const descriptionText = match[1];
+	const imagePath = match[2];
+
+	if (!imagePath)
+	{
+		return;
+	}
+
+	// Extract and trim the description and image path
+	const description = descriptionText ? descriptionText.trim() : '';
+	const cleanImagePath = imagePath.trim();
 
 	// Resolve the absolute path of the image
 	const documentFolderPath = path.dirname(document.uri.fsPath);
-	const imgPath = path.join(documentFolderPath, imagePath);
+	const imgPath = path.join(documentFolderPath, cleanImagePath);
+
 	let imgExists = false;
+
 	try
 	{
 		imgExists = fs.existsSync(imgPath);
@@ -383,7 +394,9 @@ function processComment(commentText, document)
 			{
 				return `**[${displaySize}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})**`;
 			}
+
 			return `[${displaySize}](command:extension.resizeImage?${encodeURIComponent(JSON.stringify({ imgPath, size }))})`;
+
 		}).join(' ');
 
 		// Construct the hover content
@@ -404,7 +417,8 @@ function processComment(commentText, document)
 		const markdown = new vscode.MarkdownString(hoverContent, true);
 		markdown.isTrusted = true;
 		return new vscode.Hover(markdown);
-	} else
+	}
+	else
 	{
 		// If the image does not exist, display an error message
 		const hoverContent = [
