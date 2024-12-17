@@ -187,7 +187,7 @@ function activate(context)
 		vscode.commands.registerCommand('extension.resizeImage', async ({ imgPath, size }) =>
 		{
 			currentTooltipSize = size === 'no-scale' ? 'no-scale' : parseInt(size, 10);
-			await vscode.window.showInformationMessage('Changes will be applied only after reopening the tooltip due to VS Code limitations.', { modal: true });
+			await vscode.window.showInformationMessage('Changes will only take effect after reopening the tooltip due to VS Code limitations.', { modal: true });
 		})
 	);
 
