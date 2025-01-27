@@ -15,6 +15,7 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 - Simple syntax for linking images in comments
 - Option to open images directly within the editor
 - Option to scale images for better overview
+- Configurable image path mode: relative to the file or the workspace
 
 ## Requirements
 
@@ -28,6 +29,7 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 - The image can be located in the same folder, a subfolder, or a parent folder of the current file.
 - Hover over the comment to view the image directly in the tooltip within your IDE.
 - The extension supports both single-line and multi-line comments in various programming languages.
+- Configure whether image paths are relative to the file or the workspace via the `imageComments.pathMode` setting.
 
 ### JavaScript Example
 
@@ -42,6 +44,14 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
    You can also use multi-line comments [../image.png]
 */
 ```
+
+## Configuration
+
+- **`imageComments.pathMode`** (default: `relativeToFile`)
+  - `relativeToFile`: Image paths in comments are interpreted as relative to the file.
+  - `relativeToWorkspace`: Image paths in comments are interpreted as relative to the workspace.
+
+To modify this setting, open VS Code settings (`Ctrl + ,`), search for `imageComments.pathMode`, and choose your preferred option.
 
 ## Installation
 

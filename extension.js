@@ -367,9 +367,22 @@ function processComment(commentText, document)
 	const description = descriptionText ? descriptionText.trim() : '';
 	const cleanImagePath = imagePath.trim();
 
-	// Resolve the absolute path of the image
-	const documentFolderPath = path.dirname(document.uri.fsPath);
-	const imgPath = path.join(documentFolderPath, cleanImagePath);
+	// Get the configuration for path mode
+	const config = vscode.workspace.getConfiguration('imageComments');
+	const pathMode = config.get('pathMode', 'relativeToFile');
+
+	// Resolve the absolute path of the image based on the path mode
+	let imgPath;
+	if (pathMode === 'relativeToWorkspace')
+	{
+		const workspaceFolder = vscode.workspace.workspaceFolders[0].uri.fsPath;
+		imgPath = path.join(workspaceFolder, cleanImagePath);
+	}
+	else
+	{
+		const documentFolderPath = path.dirname(document.uri.fsPath);
+		imgPath = path.join(documentFolderPath, cleanImagePath);
+	}
 
 	let imgExists = false;
 
@@ -423,7 +436,9 @@ function processComment(commentText, document)
 		// If the image does not exist, display an error message
 		const hoverContent = [
 			'## Image Comments',
-			'Could not find image',
+			`Could not find image relative to the ${pathMode === 'relativeToWorkspace' ? 'workspace' : 'file'}.`,
+			'',
+			`**Path**: ${imgPath}`,
 		].join('\n');
 
 		const markdown = new vscode.MarkdownString(hoverContent, true);
