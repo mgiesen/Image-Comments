@@ -101,6 +101,7 @@ Or just install the extension from [marketplace](https://marketplace.visualstudi
 - Swift
 - TypeScript
 - YAML
+- Vue
 
 ## Limitations
 
