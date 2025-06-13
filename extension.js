@@ -13,6 +13,17 @@ const tooltipSizes = [300, 400, 500, 750, 1000, 'no-scale'];
  * Supported languages with their comment symbols
  */
 const supportedLanguages = {
+	'vue': {
+		singleLine: ['//'],
+		multiLine: { 
+			start: '/*', 
+			end: '*/' 
+		},
+		htmlComments: {
+			start: '<!--',
+			end: '-->'
+		}
+	},
 	'c': {
 		singleLine: ['//'],
 		multiLine: { start: '/*', end: '*/' }
@@ -227,6 +238,31 @@ function provideHover(document, position)
 
 	const lineText = document.lineAt(position.line).text;
 	const lineTillPosition = lineText.substring(0, position.character);
+
+	// For Vue files, check HTML comments first
+	if (languageId === 'vue' && commentSymbols.htmlComments) {
+		const { start: htmlStart, end: htmlEnd } = commentSymbols.htmlComments;
+		const startIndex = lineText.indexOf(htmlStart);
+		const endIndex = lineText.indexOf(htmlEnd, startIndex + htmlStart.length);
+
+		if (
+			startIndex !== -1 &&
+			endIndex !== -1 &&
+			position.character > startIndex &&
+			position.character < endIndex
+		) {
+			// Cursor is within an HTML comment
+			const commentText = lineText.substring(startIndex + htmlStart.length, endIndex).trim();
+			return processComment(commentText, document);
+		}
+
+		// Check for multi-line HTML comments
+		const inHtmlComment = isPositionInMultiLineComment(document, position, htmlStart, htmlEnd);
+		if (inHtmlComment) {
+			const commentText = getMultiLineCommentText(document, position, htmlStart, htmlEnd);
+			return processComment(commentText, document);
+		}
+	}
 
 	// Check for single-line comments
 	const singleLineCommentSymbols = commentSymbols.singleLine || [];
