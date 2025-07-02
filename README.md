@@ -50,6 +50,8 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 - **`imageComments.pathMode`** (default: `relativeToFile`)
   - `relativeToFile`: Image paths in comments are interpreted as relative to the file.
   - `relativeToWorkspace`: Image paths in comments are interpreted as relative to the workspace.
+- **`imageComments.defaultSize`** (default: `400`)
+  - The size of the preview image, in pixels. Use `no-scale` to preview the image without scaling it.
 
 To modify this setting, open VS Code settings (`Ctrl + ,`), search for `imageComments.pathMode`, and choose your preferred option.
 
@@ -73,6 +75,7 @@ Or just install the extension from [marketplace](https://marketplace.visualstudi
 - Dart
 - Elixir
 - F#
+- GLSL
 - Go
 - Groovy
 - Haskell
@@ -85,6 +88,7 @@ Or just install the extension from [marketplace](https://marketplace.visualstudi
 - Lua
 - MATLAB
 - Objective-C
+- Odin
 - OCaml
 - Perl
 - PHP
