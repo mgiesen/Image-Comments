@@ -59,6 +59,10 @@ const supportedLanguages = {
 		singleLine: ['//'],
 		multiLine: { start: '(*', end: '*)' }
 	},
+	'glsl': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},	
 	'go': {
 		singleLine: ['//'],
 		multiLine: { start: '/*', end: '*/' }
@@ -109,6 +113,10 @@ const supportedLanguages = {
 	'ocaml': {
 		multiLine: { start: '(*', end: '*)' }
 	},
+	'odin': {
+		singleLine: ['//'],
+		multiLine: { start: '/*', end: '*/' }
+	},	
 	'perl': {
 		singleLine: ['#'],
 		multiLine: { start: '=pod', end: '=cut' }
@@ -406,6 +414,7 @@ function processComment(commentText, document)
 	// Get the configuration for path mode
 	const config = vscode.workspace.getConfiguration('imageComments');
 	const pathMode = config.get('pathMode', 'relativeToFile');
+	currentTooltipSize = config.get('defaultSize', '400');
 
 	// Resolve the absolute path of the image based on the path mode
 	let imgPath;

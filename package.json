@@ -29,6 +29,7 @@
 		"onLanguage:dart",
 		"onLanguage:elixir",
 		"onLanguage:fsharp",
+		"onLanguage:glsl",
 		"onLanguage:go",
 		"onLanguage:groovy",
 		"onLanguage:haskell",
@@ -42,6 +43,7 @@
 		"onLanguage:matlab",
 		"onLanguage:objective-c",
 		"onLanguage:ocaml",
+		"onLanguage:odin",
 		"onLanguage:perl",
 		"onLanguage:php",
 		"onLanguage:powershell",
@@ -74,6 +76,7 @@
 					"elixir",
 					"fsharp",
 					"go",
+					"glsl",
 					"groovy",
 					"haskell",
 					"html",
@@ -86,6 +89,7 @@
 					"matlab",
 					"objective-c",
 					"ocaml",
+					"odin",
 					"perl",
 					"php",
 					"powershell",
@@ -121,6 +125,11 @@
 						"Image paths in comments are relative to the file.",
 						"Image paths in comments are relative to the workspace."
 					]
+				},
+				"imageComments.defaultSize": {
+					"type": "string",
+					"default": "400",
+					"description": "Specifies the default size for the image preview. Use no-scale to avoid scaling it."
 				}
 			}
 		}
