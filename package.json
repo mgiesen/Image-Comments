@@ -57,7 +57,9 @@
 		"onLanguage:swift",
 		"onLanguage:typescript",
 		"onLanguage:yaml",
-		"onLanguage:vue"
+		"onLanguage:vue",
+		"onLanguage:glsl",
+		"onLanguage:odin"
 	],
 	"main": "./extension.js",
 	"contributes": {
@@ -100,7 +102,9 @@
 					"sql",
 					"swift",
 					"typescript",
-					"yaml"
+					"yaml",
+					"glsl",
+					"odin"
 				],
 				"type": "markdown"
 			}
