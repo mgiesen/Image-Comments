@@ -102,6 +102,8 @@ Or just install the extension from [marketplace](https://marketplace.visualstudi
 - TypeScript
 - YAML
 - Vue
+- Odin
+- GLSL
 
 ## Limitations
 
