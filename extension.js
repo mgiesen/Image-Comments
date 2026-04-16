@@ -48,7 +48,7 @@ const supportedLanguages = {
 		multiLine: { start: '/*', end: '*/' }
 	},
 	'dart': {
-		singleLine: ['//'],
+		singleLine: ['///', '//'],
 		multiLine: { start: '/*', end: '*/' }
 	},
 	'elixir': {
