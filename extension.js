@@ -1,7 +1,14 @@
 // Import necessary modules
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { exec } = require('child_process');
+const { promisify } = require('util');
 const vscode = require('vscode');
+
+const execAsync = promisify(exec);
+
+let outputChannel;
 
 // Initialize the default tooltip size
 let currentTooltipSize = 400;
@@ -181,6 +188,516 @@ const supportedLanguages = {
 
 
 /**
+ * Image paste functionality
+ */
+
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'];
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024;
+
+function generateFileName(extension)
+{
+	const timestamp = new Date()
+		.toISOString()
+		.replace(/[-:]/g, '')
+		.replace(/\..+/, '')
+		.replace('T', '-');
+	const random = Math.random().toString(36).substring(2, 8);
+	return `image-${timestamp}-${random}.${extension}`;
+}
+
+function generateComment(imagePath, languageId)
+{
+	const commentSymbols = supportedLanguages[languageId];
+	const hasSingleLine = commentSymbols && commentSymbols.singleLine && commentSymbols.singleLine.length > 0;
+	const hasMultiLine = commentSymbols && commentSymbols.multiLine;
+
+	if (hasSingleLine)
+	{
+		const symbol = commentSymbols.singleLine[0];
+		return `${symbol} [${imagePath}]`;
+	}
+	else if (hasMultiLine)
+	{
+		const { start, end } = commentSymbols.multiLine;
+		return `${start} [${imagePath}] ${end}`;
+	}
+	else
+	{
+		return `// [${imagePath}]`;
+	}
+}
+
+/**
+ * macOS: Detects a file path copied in Finder from the clipboard
+ */
+async function detectFilePathMac()
+{
+	try
+	{
+		const script = `try
+	set fileRef to (the clipboard as «class furl»)
+	return POSIX path of fileRef
+on error
+	return ""
+end try`;
+
+		const { stdout } = await execAsync(`osascript -e '${script}'`, { timeout: 5000 });
+		let filePath = stdout.trim();
+
+		filePath = filePath.replace(/[\x00-\x1F\x7F]/g, '').trim();
+		filePath = path.normalize(filePath);
+
+		if (!filePath || !fs.existsSync(filePath))
+		{
+			return null;
+		}
+
+		const stats = fs.statSync(filePath);
+		if (!stats.isFile())
+		{
+			return null;
+		}
+
+		const ext = path.extname(filePath).slice(1).toLowerCase();
+		if (!IMAGE_EXTENSIONS.includes(ext))
+		{
+			return null;
+		}
+
+		if (stats.size > MAX_IMAGE_SIZE)
+		{
+			vscode.window.showWarningMessage(
+				`Image is too large (${(stats.size / 1024 / 1024).toFixed(2)}MB). Maximum size is ${MAX_IMAGE_SIZE / 1024 / 1024}MB.`
+			);
+			return null;
+		}
+
+		return { tempFilePath: filePath, extension: ext };
+	}
+	catch (e)
+	{
+		return null;
+	}
+}
+
+/**
+ * macOS: Detects raw image data from clipboard (screenshot etc.)
+ */
+async function detectImageDataMac()
+{
+	let tempFile = null;
+	try
+	{
+		const detectScript = `try
+	set imageData to (the clipboard as «class PNGf»)
+	return "png"
+on error
+	try
+		set imageData to (the clipboard as «class JPEG»)
+		return "jpg"
+	on error
+		try
+			set imageData to (the clipboard as «class GIFf»)
+			return "gif"
+		on error
+			return "error"
+		end try
+	end try
+end try`;
+
+		const { stdout } = await execAsync(`osascript -e '${detectScript}'`, { timeout: 5000 });
+		const format = stdout.trim().toLowerCase();
+
+		if (format === 'error' || !IMAGE_EXTENSIONS.includes(format))
+		{
+			return null;
+		}
+
+		tempFile = path.join(
+			os.tmpdir(),
+			`vscode-image-${Date.now()}-${Math.random().toString(36).substring(7)}.${format}`
+		);
+
+		const readData = format === 'png'
+			? 'the clipboard as «class PNGf»'
+			: format === 'jpg' || format === 'jpeg'
+				? 'the clipboard as «class JPEG»'
+				: 'the clipboard as «class GIFf»';
+
+		const escapedPath = tempFile.replace(/'/g, "\\'");
+		const saveScript = `try
+	set imageData to ${readData}
+	set filePath to POSIX file "${escapedPath}"
+	set fileRef to open for access file filePath with write permission
+	write imageData to fileRef
+	close access fileRef
+	return "success"
+on error
+	return "error"
+end try`;
+
+		const saveResult = await execAsync(`osascript -e '${saveScript}'`, { timeout: 10000 });
+
+		if (saveResult.stdout.trim() !== 'success' || !fs.existsSync(tempFile))
+		{
+			if (tempFile && fs.existsSync(tempFile))
+			{
+				try { fs.unlinkSync(tempFile); } catch {}
+			}
+			return null;
+		}
+
+		const stats = fs.statSync(tempFile);
+		if (stats.size > MAX_IMAGE_SIZE)
+		{
+			fs.unlinkSync(tempFile);
+			vscode.window.showWarningMessage(
+				`Image is too large (${(stats.size / 1024 / 1024).toFixed(2)}MB). Maximum size is ${MAX_IMAGE_SIZE / 1024 / 1024}MB.`
+			);
+			return null;
+		}
+
+		return { tempFilePath: tempFile, extension: format };
+	}
+	catch (e)
+	{
+		if (tempFile && fs.existsSync(tempFile))
+		{
+			try { fs.unlinkSync(tempFile); } catch {}
+		}
+		return null;
+	}
+}
+
+/**
+ * Windows: Detects a file path copied in Explorer from the clipboard
+ */
+async function detectFilePathWindows()
+{
+	try
+	{
+		const script = `$ProgressPreference = 'SilentlyContinue'; Add-Type -AssemblyName System.Windows.Forms; $fileList = [System.Windows.Forms.Clipboard]::GetFileDropList(); if ($fileList.Count -gt 0) { Write-Output $fileList[0] }`;
+		const encodedScript = Buffer.from(script, 'utf16le').toString('base64');
+
+		const { stdout } = await execAsync(`powershell -NoProfile -EncodedCommand ${encodedScript}`, { timeout: 5000 });
+		let filePath = stdout.trim();
+
+		filePath = filePath.replace(/[\x00-\x1F\x7F]/g, '').trim();
+		filePath = path.normalize(filePath);
+
+		if (!filePath || !fs.existsSync(filePath))
+		{
+			return null;
+		}
+
+		const stats = fs.statSync(filePath);
+		if (!stats.isFile())
+		{
+			return null;
+		}
+
+		const ext = path.extname(filePath).slice(1).toLowerCase();
+		if (!IMAGE_EXTENSIONS.includes(ext))
+		{
+			return null;
+		}
+
+		if (stats.size > MAX_IMAGE_SIZE)
+		{
+			vscode.window.showWarningMessage(
+				`Image is too large (${(stats.size / 1024 / 1024).toFixed(2)}MB). Maximum size is ${MAX_IMAGE_SIZE / 1024 / 1024}MB.`
+			);
+			return null;
+		}
+
+		return { tempFilePath: filePath, extension: ext };
+	}
+	catch (e)
+	{
+		return null;
+	}
+}
+
+/**
+ * Windows: Detects raw image data from clipboard
+ */
+async function detectImageDataWindows()
+{
+	let tempFile = null;
+	try
+	{
+		const tmpDir = os.tmpdir();
+		tempFile = path.join(tmpDir, `vscode-image-${Date.now()}.png`);
+
+		const escapedTempFile = tempFile.replace(/"/g, '`"');
+		const script = `$ProgressPreference = 'SilentlyContinue'; $TempFile = "${escapedTempFile}"; Add-Type -AssemblyName System.Windows.Forms; $clipboard = [System.Windows.Forms.Clipboard]::GetImage(); if ($clipboard -ne $null) { $format = $clipboard.RawFormat.Guid; if ($format -eq [System.Drawing.Imaging.ImageFormat]::Png.Guid) { $ext = "png" } elseif ($format -eq [System.Drawing.Imaging.ImageFormat]::Jpeg.Guid) { $ext = "jpg" } elseif ($format -eq [System.Drawing.Imaging.ImageFormat]::Gif.Guid) { $ext = "gif" } elseif ($format -eq [System.Drawing.Imaging.ImageFormat]::Bmp.Guid) { $ext = "bmp" } else { $ext = "png" }; $tempFile = $TempFile -replace '\\.png$', ".$ext"; try { $clipboard.Save($tempFile); Write-Output $tempFile } catch { Write-Error $_.Exception.Message } }`;
+		const encodedScript = Buffer.from(script, 'utf16le').toString('base64');
+
+		const { stdout } = await execAsync(`powershell -NoProfile -EncodedCommand ${encodedScript}`, { timeout: 10000 });
+
+		let outputFile = stdout.trim().replace(/[\x00-\x1F\x7F]/g, '').trim();
+		outputFile = path.normalize(outputFile);
+
+		if (!outputFile || !fs.existsSync(outputFile))
+		{
+			if (tempFile && fs.existsSync(tempFile))
+			{
+				try { fs.unlinkSync(tempFile); } catch {}
+			}
+			return null;
+		}
+
+		const tmpDirNormalized = path.normalize(tmpDir);
+		const outputNormalized = path.normalize(outputFile);
+		if (!outputNormalized.toLowerCase().startsWith(tmpDirNormalized.toLowerCase() + path.sep) && outputNormalized.toLowerCase() !== tmpDirNormalized.toLowerCase())
+		{
+			try { fs.unlinkSync(outputNormalized); } catch {}
+			return null;
+		}
+
+		const stats = fs.statSync(outputFile);
+		if (stats.size > MAX_IMAGE_SIZE)
+		{
+			fs.unlinkSync(outputFile);
+			vscode.window.showWarningMessage(
+				`Image is too large (${(stats.size / 1024 / 1024).toFixed(2)}MB). Maximum size is ${MAX_IMAGE_SIZE / 1024 / 1024}MB.`
+			);
+			return null;
+		}
+
+		const ext = path.extname(outputFile).slice(1).toLowerCase();
+		if (!IMAGE_EXTENSIONS.includes(ext))
+		{
+			fs.unlinkSync(outputFile);
+			return null;
+		}
+
+		return { tempFilePath: outputFile, extension: ext };
+	}
+	catch (e)
+	{
+		if (tempFile && fs.existsSync(tempFile))
+		{
+			try { fs.unlinkSync(tempFile); } catch {}
+		}
+		return null;
+	}
+}
+
+/**
+ * Detects image from clipboard (Windows)
+ */
+async function detectImageFromClipboardWindows()
+{
+	const [filePathResult, imageDataResult] = await Promise.all([
+		detectFilePathWindows(),
+		detectImageDataWindows(),
+	]);
+
+	if (filePathResult)
+	{
+		if (imageDataResult && imageDataResult.tempFilePath !== filePathResult.tempFilePath)
+		{
+			const tmpDir = os.tmpdir();
+			if (imageDataResult.tempFilePath.startsWith(tmpDir))
+			{
+				try { fs.unlinkSync(imageDataResult.tempFilePath); } catch {}
+			}
+		}
+		return filePathResult;
+	}
+
+	return imageDataResult;
+}
+
+/**
+ * Detects image from clipboard (macOS)
+ */
+async function detectImageFromClipboardMac()
+{
+	const [filePathResult, imageDataResult] = await Promise.all([
+		detectFilePathMac(),
+		detectImageDataMac(),
+	]);
+
+	if (filePathResult)
+	{
+		if (imageDataResult && imageDataResult.tempFilePath !== filePathResult.tempFilePath)
+		{
+			const tmpDir = os.tmpdir();
+			if (imageDataResult.tempFilePath.startsWith(tmpDir))
+			{
+				try { fs.unlinkSync(imageDataResult.tempFilePath); } catch {}
+			}
+		}
+		return filePathResult;
+	}
+
+	return imageDataResult;
+}
+
+/**
+ * Detects image from clipboard (platform-specific dispatcher)
+ */
+async function detectImageFromClipboard()
+{
+	const platform = process.platform;
+
+		if (platform === 'darwin')
+	{
+		return await detectImageFromClipboardMac();
+	}
+
+	if (platform === 'win32')
+	{
+		return await detectImageFromClipboardWindows();
+	}
+
+	return null;
+}
+
+/**
+ * Handles the paste image command
+ */
+async function handlePasteImageCommand()
+{
+	const editor = vscode.window.activeTextEditor;
+	if (!editor)
+	{
+		outputChannel.appendLine('[PasteImage] No active editor.');
+		vscode.window.showWarningMessage('No active editor.');
+		return;
+	}
+
+	const platform = process.platform;
+	outputChannel.appendLine(`[PasteImage] Platform: ${platform}`);
+	if (platform !== 'darwin' && platform !== 'win32')
+	{
+		outputChannel.appendLine('[PasteImage] Unsupported platform.');
+		vscode.window.showWarningMessage('Paste Image from Clipboard is currently only supported on macOS and Windows.');
+		return;
+	}
+
+	const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+	if (!workspaceFolder)
+	{
+		outputChannel.appendLine('[PasteImage] No workspace folder.');
+		vscode.window.showErrorMessage('No workspace folder open. Please open a workspace first.');
+		return;
+	}
+
+	const config = vscode.workspace.getConfiguration('imageComments');
+	const saveDir = config.get('saveDirectory', 'image-comments');
+	const workspaceRoot = workspaceFolder.uri.fsPath;
+	const imageDir = path.join(workspaceRoot, saveDir);
+
+	if (!fs.existsSync(imageDir))
+	{
+		fs.mkdirSync(imageDir, { recursive: true });
+	}
+
+	const languageId = editor.document.languageId;
+	const commentSymbols = supportedLanguages[languageId];
+	let commentPrefix = '//';
+	if (commentSymbols)
+	{
+		if (commentSymbols.singleLine && commentSymbols.singleLine.length > 0)
+		{
+			commentPrefix = commentSymbols.singleLine[0];
+		}
+		else if (commentSymbols.multiLine)
+		{
+			commentPrefix = commentSymbols.multiLine.start;
+		}
+	}
+
+	const cursorPos = editor.selection.active;
+	const placeholderText = `${commentPrefix} Image Comments: Inserting image from clipboard. Please wait...`;
+	const placeholder = commentSymbols && commentSymbols.multiLine && (!commentSymbols.singleLine || commentSymbols.singleLine.length === 0) && !commentSymbols.htmlComments
+		? `${placeholderText} ${commentSymbols.multiLine.end}`  // HTML or CSS multi-line only
+		: placeholderText;
+
+	let placeholderInserted = false;
+	await editor.edit((editBuilder) =>
+	{
+		editBuilder.insert(cursorPos, placeholder);
+	}).then((success) => { placeholderInserted = success; });
+
+	if (!placeholderInserted)
+	{
+		return;
+	}
+
+	const placeholderRange = new vscode.Range(
+		cursorPos,
+		new vscode.Position(cursorPos.line, cursorPos.character + placeholder.length)
+	);
+
+	try
+	{
+		outputChannel.appendLine('[PasteImage] Detecting image from clipboard...');
+		const imageInfo = await detectImageFromClipboard();
+		outputChannel.appendLine(`[PasteImage] Image detected: ${imageInfo ? `${imageInfo.extension} (${imageInfo.tempFilePath})` : 'null'}`);
+
+		if (!imageInfo)
+		{
+			vscode.window.showInformationMessage(
+				'No image found in clipboard. Copy an image file from Finder or take a screenshot first.'
+			);
+			await editor.edit((editBuilder) =>
+			{
+				editBuilder.replace(placeholderRange, '');
+			});
+			return;
+		}
+
+		const fileName = generateFileName(imageInfo.extension);
+		const filePath = path.join(imageDir, fileName);
+
+		const tmpDir = os.tmpdir();
+		const isTempFile = imageInfo.tempFilePath.startsWith(tmpDir);
+		outputChannel.appendLine(`[PasteImage] isTempFile: ${isTempFile}, source: ${imageInfo.tempFilePath}`);
+
+		if (!fs.existsSync(imageInfo.tempFilePath))
+		{
+			throw new Error(`Source image file not found: ${imageInfo.tempFilePath}`);
+		}
+
+		if (isTempFile)
+		{
+			fs.renameSync(imageInfo.tempFilePath, filePath);
+		}
+		else
+		{
+			fs.copyFileSync(imageInfo.tempFilePath, filePath);
+		}
+
+		const relativePath = path.relative(workspaceRoot, filePath).replace(/\\/g, '/');
+		const comment = generateComment(relativePath, languageId);
+		outputChannel.appendLine(`[PasteImage] Language: ${languageId}, comment: "${comment}"`);
+
+		await editor.edit((editBuilder) =>
+		{
+			editBuilder.replace(placeholderRange, comment);
+		});
+
+		vscode.window.setStatusBarMessage(`Image saved: ${relativePath}`, 5000);
+		outputChannel.appendLine(`[PasteImage] SUCCESS: ${relativePath}`);
+	}
+	catch (error)
+	{
+		outputChannel.appendLine(`[PasteImage] ERROR: ${error instanceof Error ? error.message : String(error)}`);
+		await editor.edit((editBuilder) =>
+		{
+			editBuilder.replace(placeholderRange, '');
+		});
+		vscode.window.showErrorMessage(
+			`Failed to save image: ${error instanceof Error ? error.message : String(error)}`
+		);
+	}
+}
+
+/**
  * Escapes special characters in a string so it can be used in a regular expression
  */
 function escapeRegExp(string)
@@ -193,6 +710,13 @@ function escapeRegExp(string)
  */
 function activate(context)
 {
+	outputChannel = vscode.window.createOutputChannel('Image Comments');
+	outputChannel.appendLine('Image Comments extension activated.');
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('imageComment.pasteImage', handlePasteImageCommand)
+	);
+
 	// Register command to open image in the editor
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.openImage', (imgPath) =>

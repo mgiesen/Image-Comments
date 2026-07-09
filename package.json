@@ -2,7 +2,7 @@
 	"name": "image-comments",
 	"displayName": "Image Comments",
 	"icon": "icon.png",
-	"version": "1.5.1",
+	"version": "1.6.0",
 	"description": "This Visual Studio Code extension lets you easily add visual comments such as sketches or diagrams directly into your source code, improving code documentation and understanding.",
 	"publisher": "mgiesen",
 	"license": "MIT",
@@ -20,6 +20,7 @@
 		"Other"
 	],
 	"activationEvents": [
+		"onCommand:imageComment.pasteImage",
 		"onLanguage:c",
 		"onLanguage:clojure",
 		"onLanguage:coffeescript",
@@ -63,6 +64,22 @@
 	],
 	"main": "./extension.js",
 	"contributes": {
+		"commands": [
+			{
+				"command": "imageComment.pasteImage",
+				"title": "Image Comments: Paste Image",
+				"icon": "$(file-media)"
+			}
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "imageComment.pasteImage",
+					"when": "editorTextFocus && !editorReadonly",
+					"group": "imageComment"
+				}
+			]
+		},
 		"hoverProvider": [
 			{
 				"for": [
@@ -125,6 +142,11 @@
 						"Image paths in comments are relative to the file.",
 						"Image paths in comments are relative to the workspace."
 					]
+				},
+				"imageComments.saveDirectory": {
+					"type": "string",
+					"default": "image-comments",
+					"description": "Directory where pasted images are saved, relative to the workspace root."
 				}
 			}
 		}
