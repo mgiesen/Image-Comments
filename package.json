@@ -2,7 +2,7 @@
 	"name": "image-comments",
 	"displayName": "Image Comments",
 	"icon": "icon.png",
-	"version": "1.6.0",
+	"version": "1.7.0",
 	"description": "This Visual Studio Code extension lets you easily add visual comments such as sketches or diagrams directly into your source code, improving code documentation and understanding.",
 	"publisher": "mgiesen",
 	"license": "MIT",
@@ -10,8 +10,21 @@
 		"type": "git",
 		"url": "https://github.com/mgiesen/Image-Comments.git"
 	},
+	"bugs": {
+		"url": "https://github.com/mgiesen/Image-Comments/issues"
+	},
+	"homepage": "https://github.com/mgiesen/Image-Comments#readme",
+	"keywords": [
+		"image",
+		"comments",
+		"documentation",
+		"diagram",
+		"sketch",
+		"hover",
+		"tooltip"
+	],
 	"engines": {
-		"vscode": "^1.60.0"
+		"vscode": "^1.78.0"
 	},
 	"categories": [
 		"Programming Languages",
@@ -20,7 +33,6 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:imageComment.pasteImage",
 		"onLanguage:c",
 		"onLanguage:clojure",
 		"onLanguage:coffeescript",
@@ -62,11 +74,11 @@
 		"onLanguage:glsl",
 		"onLanguage:odin"
 	],
-	"main": "./extension.js",
+	"main": "./src/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "imageComment.pasteImage",
+				"command": "imageComments.pasteImage",
 				"title": "Image Comments: Paste Image",
 				"icon": "$(file-media)"
 			}
@@ -74,58 +86,12 @@
 		"menus": {
 			"editor/context": [
 				{
-					"command": "imageComment.pasteImage",
+					"command": "imageComments.pasteImage",
 					"when": "editorTextFocus && !editorReadonly",
 					"group": "imageComment"
 				}
 			]
 		},
-		"hoverProvider": [
-			{
-				"for": [
-					"c",
-					"clojure",
-					"coffeescript",
-					"cpp",
-					"csharp",
-					"css",
-					"dart",
-					"elixir",
-					"fsharp",
-					"go",
-					"groovy",
-					"haskell",
-					"html",
-					"java",
-					"javascript",
-					"jsonc",
-					"kotlin",
-					"less",
-					"lua",
-					"matlab",
-					"objective-c",
-					"ocaml",
-					"perl",
-					"php",
-					"powershell",
-					"python",
-					"r",
-					"ruby",
-					"rust",
-					"sass",
-					"scala",
-					"scss",
-					"shellscript",
-					"sql",
-					"swift",
-					"typescript",
-					"yaml",
-					"glsl",
-					"odin"
-				],
-				"type": "markdown"
-			}
-		],
 		"configuration": {
 			"type": "object",
 			"title": "Image Comments",
@@ -151,8 +117,13 @@
 			}
 		}
 	},
+	"scripts": {
+		"test": "node --test",
+		"package": "vsce package",
+		"publish": "vsce publish"
+	},
 	"devDependencies": {
-		"vsce": "^2.15.0",
-		"vscode": "^1.1.37"
+		"@types/vscode": "^1.78.0",
+		"@vscode/vsce": "^3.0.0"
 	}
 }

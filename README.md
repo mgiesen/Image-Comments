@@ -7,7 +7,7 @@
 
 The `Image Comments` extension for Visual Studio Code allows you to add images, such as sketches or diagrams, directly into your source code. This helps to improve documentation and understanding, especially for complex algorithms. By visualizing code concepts, it makes them easier to comprehend and track over time.
 
-![Image](readme/image-comment.webp)
+![Image](assets/image-comment.webp)
 
 ## Features
 
@@ -22,7 +22,7 @@ The `Image Comments` extension for Visual Studio Code allows you to add images, 
 
 ## Requirements
 
-- Visual Studio Code version 1.60.0 or higher
+- Visual Studio Code version 1.78.0 or higher
 
 ## Usage
 
@@ -119,6 +119,16 @@ Or install directly from the [marketplace](https://marketplace.visualstudio.com/
 ## Limitations
 
 Due to the limitations of Visual Studio Code, it is not possible to display images directly in the code. Therefore, this extension uses the solution of visualization via tooltips. The usage and styling of tooltips are also severely restricted. We do our best to always utilize all possibilities provided by Microsoft.
+
+## Development
+
+```bash
+npm install   # install dev dependencies
+npm test      # run unit tests (Node built-in test runner)
+npm run package  # build the .vsix
+```
+
+To debug, open the project in VS Code and press `F5` to launch an Extension Development Host.
 
 ## Reporting Issues
 
